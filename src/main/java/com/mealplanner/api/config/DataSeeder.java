@@ -47,24 +47,45 @@ public class DataSeeder implements ApplicationRunner {
         log.info("Seeding demo data...");
 
         User demo = seedUser();
+        User alice = seedAlice();
+        User bob = seedBob();
         List<Ingredient> ingredients = seedIngredients();
         List<Recipe> recipes = seedRecipes(demo, ingredients);
         seedMealPlan(demo, recipes);
         seedShoppingList(demo, ingredients);
+        seedAliceData(alice, ingredients, recipes);
+        seedBobData(bob, ingredients, recipes);
 
-        log.info("Demo data seeded successfully. Login: demo / demo1234");
+        log.info("Demo data seeded successfully. Logins: demo/demo1234 | alice/alice1234 | bob/bob1234");
     }
 
-    // ─── User ────────────────────────────────────────────────────────────────
+    // ─── Users ───────────────────────────────────────────────────────────────
 
     private User seedUser() {
-        User user = User.builder()
+        return userRepository.save(User.builder()
                 .username("demo")
                 .email("demo@mealplanner.com")
                 .password(passwordEncoder.encode("demo1234"))
                 .fullName("Demo User")
-                .build();
-        return userRepository.save(user);
+                .build());
+    }
+
+    private User seedAlice() {
+        return userRepository.save(User.builder()
+                .username("alice")
+                .email("alice@mealplanner.com")
+                .password(passwordEncoder.encode("alice1234"))
+                .fullName("Alice Johnson")
+                .build());
+    }
+
+    private User seedBob() {
+        return userRepository.save(User.builder()
+                .username("bob")
+                .email("bob@mealplanner.com")
+                .password(passwordEncoder.encode("bob1234"))
+                .fullName("Bob Smith")
+                .build());
     }
 
     // ─── Ingredients ─────────────────────────────────────────────────────────
@@ -303,5 +324,163 @@ public class DataSeeder implements ApplicationRunner {
         return ShoppingListItem.builder()
                 .shoppingList(list).ingredient(ingredient)
                 .quantity(qty).unit(unit).checked(checked).build();
+    }
+
+    // ─── Alice: high-protein focus, owns her own recipes ─────────────────────
+
+    private void seedAliceData(User alice, List<Ingredient> ing, List<Recipe> sharedRecipes) {
+        // Alice creates two of her own recipes
+        Recipe aliceR1 = recipeRepository.save(recipe(alice, "Salmon Power Bowl",
+                "Alice's go-to high-protein meal prep bowl.",
+                "1. Cook brown rice and let cool.\n2. Pan-sear salmon with lemon juice for 4 minutes each side.\n3. Blanch spinach for 1 minute.\n4. Slice avocado.\n5. Assemble: rice, salmon, spinach, avocado. Season and serve.",
+                10, 15, 2, Difficulty.MEDIUM));
+
+        Recipe aliceR2 = recipeRepository.save(recipe(alice, "Greek Yogurt Protein Bowl",
+                "Alice's quick breakfast — high protein, low effort.",
+                "1. Spoon Greek yogurt into a bowl.\n2. Slice banana and add on top.\n3. Sprinkle oats for crunch.\n4. Drizzle with honey if desired.",
+                5, 0, 1, Difficulty.EASY));
+
+        recipeIngredientRepository.saveAll(List.of(
+            ri(aliceR1, ing.get(15), 180.0, "grams"),  // Salmon
+            ri(aliceR1, ing.get(1),  150.0, "grams"),  // Brown Rice
+            ri(aliceR1, ing.get(11), 100.0, "grams"),  // Spinach
+            ri(aliceR1, ing.get(18), 100.0, "grams"),  // Avocado
+            ri(aliceR1, ing.get(19),  15.0, "grams"),  // Lemon
+
+            ri(aliceR2, ing.get(12), 200.0, "grams"),  // Greek Yogurt
+            ri(aliceR2, ing.get(14), 100.0, "grams"),  // Banana
+            ri(aliceR2, ing.get(13),  40.0, "grams")   // Oats
+        ));
+
+        // Alice's meal plan: Mon–Wed using her recipes + shared recipes
+        LocalDate monday = LocalDate.now().with(DayOfWeek.MONDAY);
+        MealPlan alicePlan = mealPlanRepository.save(MealPlan.builder()
+                .user(alice)
+                .name("Alice's Protein Week")
+                .startDate(monday)
+                .endDate(monday.plusDays(6))
+                .build());
+
+        mealPlanEntryRepository.saveAll(List.of(
+            entry(alicePlan, aliceR2,              DayOfWeek.MONDAY,    MealType.BREAKFAST),
+            entry(alicePlan, aliceR1,              DayOfWeek.MONDAY,    MealType.LUNCH),
+            entry(alicePlan, sharedRecipes.get(0), DayOfWeek.MONDAY,    MealType.DINNER),
+
+            entry(alicePlan, aliceR2,              DayOfWeek.TUESDAY,   MealType.BREAKFAST),
+            entry(alicePlan, sharedRecipes.get(6), DayOfWeek.TUESDAY,   MealType.LUNCH),
+            entry(alicePlan, aliceR1,              DayOfWeek.TUESDAY,   MealType.DINNER),
+
+            entry(alicePlan, aliceR2,              DayOfWeek.WEDNESDAY, MealType.BREAKFAST),
+            entry(alicePlan, sharedRecipes.get(3), DayOfWeek.WEDNESDAY, MealType.LUNCH),
+            entry(alicePlan, sharedRecipes.get(2), DayOfWeek.WEDNESDAY, MealType.DINNER),
+
+            entry(alicePlan, aliceR2,              DayOfWeek.THURSDAY,  MealType.BREAKFAST),
+            entry(alicePlan, aliceR1,              DayOfWeek.THURSDAY,  MealType.LUNCH),
+            entry(alicePlan, sharedRecipes.get(0), DayOfWeek.THURSDAY,  MealType.DINNER),
+
+            entry(alicePlan, aliceR2,              DayOfWeek.FRIDAY,    MealType.BREAKFAST),
+            entry(alicePlan, sharedRecipes.get(2), DayOfWeek.FRIDAY,    MealType.LUNCH),
+            entry(alicePlan, sharedRecipes.get(6), DayOfWeek.FRIDAY,    MealType.DINNER)
+        ));
+
+        // Alice's shopping list — protein-focused items
+        ShoppingList aliceList = shoppingListRepository.save(ShoppingList.builder()
+                .user(alice)
+                .name("Alice's Protein Shopping List")
+                .mealPlan(alicePlan)
+                .build());
+
+        shoppingListItemRepository.saveAll(List.of(
+            item(aliceList, ing.get(15), 900.0, "grams", false),  // Salmon
+            item(aliceList, ing.get(1),  750.0, "grams", false),  // Brown Rice
+            item(aliceList, ing.get(11), 500.0, "grams", false),  // Spinach
+            item(aliceList, ing.get(18), 500.0, "grams", false),  // Avocado
+            item(aliceList, ing.get(12), 600.0, "grams", true),   // Greek Yogurt
+            item(aliceList, ing.get(14), 500.0, "grams", true),   // Banana
+            item(aliceList, ing.get(13), 200.0, "grams", false),  // Oats
+            item(aliceList, ing.get(0),  400.0, "grams", false),  // Chicken Breast
+            item(aliceList, ing.get(19),  60.0, "grams", false),  // Lemon
+            item(aliceList, ing.get(8),   20.0, "grams", true)    // Garlic
+        ));
+    }
+
+    // ─── Bob: vegan focus, owns his own recipes ───────────────────────────────
+
+    private void seedBobData(User bob, List<Ingredient> ing, List<Recipe> sharedRecipes) {
+        // Bob creates two of his own vegan recipes
+        Recipe bobR1 = recipeRepository.save(recipe(bob, "Bob's Vegan Stir Fry",
+                "Bob's quick plant-based weeknight dinner.",
+                "1. Cook brown rice.\n2. Heat olive oil in a wok over high heat.\n3. Stir fry broccoli, onion and garlic for 5 minutes.\n4. Add tomatoes and black beans, cook 3 more minutes.\n5. Season with salt, pepper and serve over rice.",
+                10, 15, 2, Difficulty.EASY));
+
+        Recipe bobR2 = recipeRepository.save(recipe(bob, "Bob's Overnight Banana Oats",
+                "Bob's meal-prep breakfast for the whole week.",
+                "1. Mix oats with water or plant milk in a jar.\n2. Stir in a mashed banana.\n3. Refrigerate overnight.\n4. Top with sliced banana in the morning.",
+                5, 0, 1, Difficulty.EASY));
+
+        recipeIngredientRepository.saveAll(List.of(
+            ri(bobR1, ing.get(1),  150.0, "grams"),  // Brown Rice
+            ri(bobR1, ing.get(2),  150.0, "grams"),  // Broccoli
+            ri(bobR1, ing.get(9),   80.0, "grams"),  // Onion
+            ri(bobR1, ing.get(8),   10.0, "grams"),  // Garlic
+            ri(bobR1, ing.get(10), 120.0, "grams"),  // Tomato
+            ri(bobR1, ing.get(17), 120.0, "grams"),  // Black Beans
+            ri(bobR1, ing.get(7),   15.0, "ml"),     // Olive Oil
+
+            ri(bobR2, ing.get(13),  80.0, "grams"),  // Oats
+            ri(bobR2, ing.get(14), 100.0, "grams")   // Banana
+        ));
+
+        // Bob's meal plan: Mon–Fri, mostly vegan meals
+        LocalDate monday = LocalDate.now().with(DayOfWeek.MONDAY);
+        MealPlan bobPlan = mealPlanRepository.save(MealPlan.builder()
+                .user(bob)
+                .name("Bob's Plant-Based Week")
+                .startDate(monday)
+                .endDate(monday.plusDays(6))
+                .build());
+
+        mealPlanEntryRepository.saveAll(List.of(
+            entry(bobPlan, bobR2,               DayOfWeek.MONDAY,    MealType.BREAKFAST),
+            entry(bobPlan, sharedRecipes.get(5),DayOfWeek.MONDAY,    MealType.LUNCH),
+            entry(bobPlan, bobR1,               DayOfWeek.MONDAY,    MealType.DINNER),
+
+            entry(bobPlan, bobR2,               DayOfWeek.TUESDAY,   MealType.BREAKFAST),
+            entry(bobPlan, bobR1,               DayOfWeek.TUESDAY,   MealType.LUNCH),
+            entry(bobPlan, sharedRecipes.get(5),DayOfWeek.TUESDAY,   MealType.DINNER),
+
+            entry(bobPlan, bobR2,               DayOfWeek.WEDNESDAY, MealType.BREAKFAST),
+            entry(bobPlan, sharedRecipes.get(5),DayOfWeek.WEDNESDAY, MealType.LUNCH),
+            entry(bobPlan, bobR1,               DayOfWeek.WEDNESDAY, MealType.DINNER),
+
+            entry(bobPlan, bobR2,               DayOfWeek.THURSDAY,  MealType.BREAKFAST),
+            entry(bobPlan, bobR1,               DayOfWeek.THURSDAY,  MealType.LUNCH),
+            entry(bobPlan, sharedRecipes.get(1),DayOfWeek.THURSDAY,  MealType.DINNER),
+
+            entry(bobPlan, bobR2,               DayOfWeek.FRIDAY,    MealType.BREAKFAST),
+            entry(bobPlan, sharedRecipes.get(5),DayOfWeek.FRIDAY,    MealType.LUNCH),
+            entry(bobPlan, bobR1,               DayOfWeek.FRIDAY,    MealType.DINNER)
+        ));
+
+        // Bob's shopping list — plant-based items
+        ShoppingList bobList = shoppingListRepository.save(ShoppingList.builder()
+                .user(bob)
+                .name("Bob's Vegan Shopping List")
+                .mealPlan(bobPlan)
+                .build());
+
+        shoppingListItemRepository.saveAll(List.of(
+            item(bobList, ing.get(1),  750.0, "grams", false),  // Brown Rice
+            item(bobList, ing.get(2),  750.0, "grams", false),  // Broccoli
+            item(bobList, ing.get(9),  400.0, "grams", false),  // Onion
+            item(bobList, ing.get(8),   50.0, "grams", true),   // Garlic
+            item(bobList, ing.get(10), 600.0, "grams", false),  // Tomato
+            item(bobList, ing.get(17), 600.0, "grams", false),  // Black Beans
+            item(bobList, ing.get(7),   75.0, "ml",    true),   // Olive Oil
+            item(bobList, ing.get(13), 400.0, "grams", false),  // Oats
+            item(bobList, ing.get(14), 500.0, "grams", true),   // Banana
+            item(bobList, ing.get(18), 300.0, "grams", false),  // Avocado
+            item(bobList, ing.get(19),  40.0, "grams", false)   // Lemon
+        ));
     }
 }
