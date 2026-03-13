@@ -18,9 +18,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout source code from the repository
+      # Step 1: Checkout source code from the repository (full history for SonarCloud blame analysis)
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Step 2: Set up Java 17 with Maven caching for faster builds
       - name: Set up JDK 17
@@ -38,7 +40,13 @@ jobs:
       - name: Run Static Analysis and Code Coverage
         run: mvn verify -B -DskipTests -Dspotbugs.failOnError=false -Dpmd.failOnViolation=false
 
-      # Step 5: Run Trivy vulnerability scanner on the project filesystem
+      # Step 5: Run SonarCloud analysis for continuous code quality monitoring
+      - name: SonarCloud Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DskipTests -Dsonar.projectKey=smart-recipe-meal-planner -Dsonar.organization=escthedeadline -Dsonar.host.url=https://sonarcloud.io
+
+      # Step 6: Run Trivy vulnerability scanner on the project filesystem
       - name: Security Vulnerability Scan with Trivy
         uses: aquasecurity/trivy-action@master
         with:
@@ -49,7 +57,7 @@ jobs:
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
 
-      # Step 6: Upload SpotBugs analysis report as CI artifact
+      # Step 7: Upload SpotBugs analysis report as CI artifact
       - name: Upload SpotBugs Report
         uses: actions/upload-artifact@v4
         if: always()
@@ -57,7 +65,7 @@ jobs:
           name: spotbugs-report
           path: target/spotbugs/
 
-      # Step 7: Upload PMD analysis report as CI artifact
+      # Step 8: Upload PMD analysis report as CI artifact
       - name: Upload PMD Report
         uses: actions/upload-artifact@v4
         if: always()
@@ -65,7 +73,7 @@ jobs:
           name: pmd-report
           path: target/pmd*
 
-      # Step 8: Upload JaCoCo code coverage report as CI artifact
+      # Step 9: Upload JaCoCo code coverage report as CI artifact
       - name: Upload JaCoCo Coverage Report
         uses: actions/upload-artifact@v4
         if: always()
@@ -73,7 +81,7 @@ jobs:
           name: jacoco-coverage-report
           path: target/site/jacoco/
 
-      # Step 9: Upload Trivy security scan report as CI artifact
+      # Step 10: Upload Trivy security scan report as CI artifact
       - name: Upload Trivy Security Report
         uses: actions/upload-artifact@v4
         if: always()
@@ -81,7 +89,7 @@ jobs:
           name: trivy-security-report
           path: trivy-report.txt
 
-      # Step 10: Upload the packaged JAR as a build artifact for deployment
+      # Step 11: Upload the packaged JAR as a build artifact for deployment
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
