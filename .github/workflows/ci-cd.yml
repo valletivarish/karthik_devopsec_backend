@@ -9,10 +9,6 @@ on:
   pull_request:
     branches: [main]
 
-defaults:
-  run:
-    working-directory: backend
-
 jobs:
   # ==================== CI STAGE ====================
   # Runs on every push and pull request
@@ -47,7 +43,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          scan-ref: './backend'
+          scan-ref: '.'
           format: 'table'
           output: 'trivy-report.txt'
           severity: 'CRITICAL,HIGH,MEDIUM'
@@ -59,7 +55,7 @@ jobs:
         if: always()
         with:
           name: spotbugs-report
-          path: backend/target/spotbugs/
+          path: target/spotbugs/
 
       # Step 7: Upload PMD analysis report as CI artifact
       - name: Upload PMD Report
@@ -67,7 +63,7 @@ jobs:
         if: always()
         with:
           name: pmd-report
-          path: backend/target/pmd*
+          path: target/pmd*
 
       # Step 8: Upload JaCoCo code coverage report as CI artifact
       - name: Upload JaCoCo Coverage Report
@@ -75,7 +71,7 @@ jobs:
         if: always()
         with:
           name: jacoco-coverage-report
-          path: backend/target/site/jacoco/
+          path: target/site/jacoco/
 
       # Step 9: Upload Trivy security scan report as CI artifact
       - name: Upload Trivy Security Report
@@ -90,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
-          path: backend/target/*.jar
+          path: target/*.jar
 
   # ==================== CD STAGE ====================
   # Runs only on push to main branch (not on PRs)
