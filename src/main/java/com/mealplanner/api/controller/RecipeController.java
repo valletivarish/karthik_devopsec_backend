@@ -24,10 +24,10 @@ public class RecipeController {
 
     private final RecipeService recipeService;
 
-    /** GET /api/recipes - Retrieve all recipes in the system */
+    /** GET /api/recipes - Retrieve all recipes for the authenticated user */
     @GetMapping
-    public ResponseEntity<List<RecipeResponse>> getAllRecipes() {
-        return ResponseEntity.ok(recipeService.getAllRecipes());
+    public ResponseEntity<List<RecipeResponse>> getAllRecipes(Authentication authentication) {
+        return ResponseEntity.ok(recipeService.getRecipesByUsername(authentication.getName()));
     }
 
     /** GET /api/recipes/{id} - Retrieve a specific recipe by ID */

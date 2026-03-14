@@ -24,10 +24,10 @@ public class MealPlanController {
 
     private final MealPlanService mealPlanService;
 
-    /** GET /api/meal-plans - Retrieve all meal plans */
+    /** GET /api/meal-plans - Retrieve all meal plans for the authenticated user */
     @GetMapping
-    public ResponseEntity<List<MealPlanResponse>> getAllMealPlans() {
-        return ResponseEntity.ok(mealPlanService.getAllMealPlans());
+    public ResponseEntity<List<MealPlanResponse>> getAllMealPlans(Authentication authentication) {
+        return ResponseEntity.ok(mealPlanService.getMealPlansByUsername(authentication.getName()));
     }
 
     /** GET /api/meal-plans/{id} - Retrieve a specific meal plan with entries */

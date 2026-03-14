@@ -41,6 +41,16 @@ public class RecipeService {
                 .collect(Collectors.toList());
     }
 
+    /** Retrieves all recipes belonging to the authenticated user */
+    @Transactional(readOnly = true)
+    public List<RecipeResponse> getRecipesByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        return recipeRepository.findByUserId(user.getId()).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     /** Retrieves recipes belonging to a specific user */
     @Transactional(readOnly = true)
     public List<RecipeResponse> getRecipesByUser(Long userId) {

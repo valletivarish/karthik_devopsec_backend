@@ -47,6 +47,16 @@ public class MealPlanService {
                 .collect(Collectors.toList());
     }
 
+    /** Retrieves all meal plans belonging to the authenticated user */
+    @Transactional(readOnly = true)
+    public List<MealPlanResponse> getMealPlansByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        return mealPlanRepository.findByUserId(user.getId()).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     /** Retrieves a single meal plan by ID with all entries */
     @Transactional(readOnly = true)
     public MealPlanResponse getMealPlanById(Long id) {

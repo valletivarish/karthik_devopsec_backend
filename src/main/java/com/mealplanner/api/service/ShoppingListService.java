@@ -45,6 +45,16 @@ public class ShoppingListService {
                 .collect(Collectors.toList());
     }
 
+    /** Retrieves all shopping lists belonging to the authenticated user */
+    @Transactional(readOnly = true)
+    public List<ShoppingListResponse> getShoppingListsByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        return shoppingListRepository.findByUserId(user.getId()).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     /** Retrieves a single shopping list by ID */
     @Transactional(readOnly = true)
     public ShoppingListResponse getShoppingListById(Long id) {

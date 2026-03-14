@@ -24,10 +24,10 @@ public class ShoppingListController {
 
     private final ShoppingListService shoppingListService;
 
-    /** GET /api/shopping-lists - Retrieve all shopping lists */
+    /** GET /api/shopping-lists - Retrieve all shopping lists for the authenticated user */
     @GetMapping
-    public ResponseEntity<List<ShoppingListResponse>> getAllShoppingLists() {
-        return ResponseEntity.ok(shoppingListService.getAllShoppingLists());
+    public ResponseEntity<List<ShoppingListResponse>> getAllShoppingLists(Authentication authentication) {
+        return ResponseEntity.ok(shoppingListService.getShoppingListsByUsername(authentication.getName()));
     }
 
     /** GET /api/shopping-lists/{id} - Retrieve a specific shopping list */

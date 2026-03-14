@@ -77,7 +77,7 @@ class RecipeControllerTest {
     @Test
     @WithMockUser(username = "testuser")
     void getAllRecipes_returnsListOfRecipes() throws Exception {
-        when(recipeService.getAllRecipes()).thenReturn(Arrays.asList(recipeResponse));
+        when(recipeService.getRecipesByUsername("testuser")).thenReturn(Arrays.asList(recipeResponse));
 
         mockMvc.perform(get("/api/recipes"))
                 .andExpect(status().isOk())
