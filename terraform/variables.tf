@@ -47,5 +47,5 @@ variable "db_password" {
 variable "s3_bucket_name" {
   description = "Globally unique S3 bucket name for frontend static hosting"
   type        = string
-  default     = "smart-meal-planner-25173421"
+  default     = "smart-meal-planner-25160052"
 }
