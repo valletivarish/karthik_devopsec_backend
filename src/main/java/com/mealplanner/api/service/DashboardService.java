@@ -39,14 +39,18 @@ public class DashboardService {
         long totalIngredients = ingredientRepository.count();
         long totalShoppingLists = shoppingListRepository.findByUserId(user.getId()).size();
 
-        /* Get the most recent meal plan for nutritional breakdown */
+        /* Pick the current active plan (today in range), else fall back to latest */
         List<MealPlan> userPlans = mealPlanRepository.findByUserId(user.getId());
         Map<String, Double> caloriesByMealType = new LinkedHashMap<>();
         Map<String, Double> macroDistribution = new LinkedHashMap<>();
         List<DashboardResponse.DailyNutrition> dailyNutrition = new ArrayList<>();
 
         if (!userPlans.isEmpty()) {
-            MealPlan latestPlan = userPlans.get(userPlans.size() - 1);
+            java.time.LocalDate today = java.time.LocalDate.now();
+            MealPlan latestPlan = userPlans.stream()
+                    .filter(p -> !today.isBefore(p.getStartDate()) && !today.isAfter(p.getEndDate()))
+                    .findFirst()
+                    .orElse(userPlans.get(userPlans.size() - 1));
             double totalCalories = 0;
             double totalProtein = 0;
             double totalCarbs = 0;
