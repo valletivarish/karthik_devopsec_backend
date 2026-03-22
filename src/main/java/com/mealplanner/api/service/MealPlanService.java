@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -179,6 +180,11 @@ public class MealPlanService {
                     .fat(Math.round(recipeFa * 100.0) / 100.0)
                     .build());
         }
+
+        /* Sort entries by day of week (Monday first) then by meal type */
+        entryResponses.sort(Comparator
+                .comparing((MealPlanResponse.MealPlanEntryResponse e) -> DayOfWeek.valueOf(e.getDayOfWeek()).ordinal())
+                .thenComparing(e -> MealType.valueOf(e.getMealType()).ordinal()));
 
         return MealPlanResponse.builder()
                 .id(mealPlan.getId())
