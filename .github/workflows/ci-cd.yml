@@ -172,5 +172,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            curl -f http://localhost:8080/api/health || exit 1
-            echo "Health check passed - deployment successful"
+            for i in 1 2 3 4 5 6; do
+              curl -sf http://localhost:8080/api/health && echo "Health check passed - deployment successful" && exit 0
+              echo "Attempt $i: waiting for app to start..."
+              sleep 15
+            done
+            echo "Health check failed after 90 seconds"
+            exit 1
