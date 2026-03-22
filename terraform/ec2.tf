@@ -1,5 +1,5 @@
 # EC2 instance configuration for running the Spring Boot backend API
-# Uses t2.micro (free tier eligible) with Ubuntu 24.04
+# Uses t3.micro (AWS Free Tier eligible) with Ubuntu 24.04
 
 # Security group allowing HTTP (8080) and SSH (22) access
 resource "aws_security_group" "backend_sg" {

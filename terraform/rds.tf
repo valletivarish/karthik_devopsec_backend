@@ -1,5 +1,5 @@
 # RDS PostgreSQL configuration for the meal planner database
-# Uses db.t3.micro (free tier eligible) in private subnets
+# Uses db.t3.micro (AWS Free Tier eligible) in private subnets
 
 # DB subnet group spanning two availability zones for high availability
 resource "aws_db_subnet_group" "main" {
